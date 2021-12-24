@@ -1,95 +1,71 @@
-document.addEventListener('DOMContentLoaded', function() {
-    window.history.back();
-    var modalButtons = document.querySelectorAll('.js-open-modal'),
-        overlay = document.querySelector('.js-overlay-modal'),
-        closeButtons = document.querySelectorAll('.js-modal-close'),
-        request = new XMLHttpRequest();
+var $popOverlay = $(".popup-overlay");
+var $popWindow = $(".popWindow");
+var $popupMainWindow = $(".popup-main-window");
+var $popThankYouWindow = $(".thank-you-window");
+var $popClose = $(".close-btn");
+var $popOpen = $("#for-popup-form");
 
-    modalButtons.forEach(function(item) {
-        item.addEventListener('click', function(e) {
-            history.pushState({ page: 1 }, "tttt1", "?modal");
-            try {
-                inputs[0].value = localStorage.key(localStorage.length - 1);
-                inputs[1].value = localStorage.getItem(localStorage.key(localStorage.length - 1));
-            } finally {
-                statusMessage.innerHTML = '';
-
-                e.preventDefault();
-
-                var modalId = this.getAttribute('data-modal'),
-                    modalElem = document.querySelector('.modal[data-modal="' + modalId + '"]');
-
-                modalElem.classList.add('active');
-                overlay.classList.add('active');
-            }
-        });
-
+$(function() {
+    // Close Pop-Up after clicking on the button "Close"
+    $popClose.on("click", function() {
+        history.replaceState(null, null, ' ');
+        $popOverlay.fadeOut();
+        $popWindow.fadeOut();
+        $popThankYouWindow.fadeOut();
     });
 
-
-    closeButtons.forEach(function(item) {
-
-        item.addEventListener('click', function(e) {
-            var parentModal = this.closest('.modal');
-
-            parentModal.classList.remove('active');
-            overlay.classList.remove('active');
-            window.history.back();
-        });
-
+    // Close Pop-Up after clicking on the Overlay
+    $(document).on("click", function(event) {
+        if ($(event.target).closest($popWindow).length) return;
+        history.replaceState(null, null, ' ');
+        $popOverlay.fadeOut();
+        $popWindow.fadeOut();
+        $popThankYouWindow.fadeOut();
+        event.stopPropagation();
     });
 
-    document.body.addEventListener('keyup', function(e) {
-        var key = e.keyCode;
-
-        if (key == 27) {
-
-            document.querySelector('.modal.active').classList.remove('active');
-            document.querySelector('.overlay').classList.remove('active');
-        };
-    }, false);
-
-
-    overlay.addEventListener('click', function() {
-        document.querySelector('.modal.active').classList.remove('active');
-        this.classList.remove('active');
+    // popup form
+    $(".popup-form").submit(function() {
+        var th = $(this);
+        $(".popup-submit").prop('disabled', true);
+        $.ajax({
+            type: "POST",
+            url: "https://formcarry.com/s/0E9dIKmZD5e",
+            data: th.serialize(),
+        })
+        //.done(function() {
+        // после успешной отправки скрываем форму подписки и выводим окно с благодарностью за заполнение формы
+        $popupMainWindow.fadeOut();
+        $popThankYouWindow.fadeIn();
+        // очищаем форму
+        setTimeout(function() {
+            $(".popup-submit").prop('disabled', false);
+            th.trigger("reset");
+        }, 1000);
+        //});
+        return false;
     });
-    let message = {
-        loading: 'Загрузка...',
-        success: 'Данные успешно отправлены!',
-        failure: 'Что-то пошло не так...'
-    };
-    let form = document.querySelector('.main'),
-        statusMessage = document.createElement('div'),
-        input = document.querySelector('input[type=submit]'),
-        inputs = document.querySelectorAll('input[type=text], input[type=email]');
-    form.appendChild(statusMessage);
+});
 
-    input.addEventListener('click', function(event) {
-        let key = inputs[0].value;
-        let value = inputs[1].value;
-
-        localStorage.setItem(key, value);
-
+$(document).ready(function() {
+    $popOpen.click(function(){
+        window.location.hash = "#popup";
+        $popOverlay.fadeIn();
+        $popupMainWindow.fadeIn();
+        return false;
     });
+});
 
-    formcarry({
-        form: "3l-8n_hL10",
-        element: "#my-formcarry",
-        extraData: {
-            screenSize: `${window.screen.width}x${window.screen.height}`,
-            language: window.navigator.language,
-        },
-        onSuccess: function(response) {
-            statusMessage.innerHTML = message.success;
-            for (var i = 0; i < inputs.length; i++) {
-                inputs[i].value = '';
-            };
-        },
-        onError: function(error) {
-            statusMessage.innerHTML = message.failure;
+$(window).on('hashchange', function (event) { //при клике на "назад" скрывать форму
+    if(window.location.hash == "#popup"){
+        $popOverlay.fadeIn();
+        $popupMainWindow.fadeIn();
+    }
+    else{
+        if(window.location.hash != "#popup") {
+            $popOverlay.fadeOut();
+            $popupMainWindow.fadeOut();
+            $popThankYouWindow.fadeOut();
         }
-    });
-
-
+    }
 });
